@@ -126,6 +126,10 @@ Q14. In a triangle ABC, if 2∠A = 3∠B = 6∠C, find ∠A, ∠B and ∠C.  [3 
   }
 
   async function handleDownload() {
+    if (typeof docx === "undefined" || typeof MarkDexam === "undefined") {
+      alert("The document engine hasn't finished loading yet (or failed to load — check your internet connection). Please wait a moment and try again.");
+      return;
+    }
     downloadBtn.disabled = true;
     const prevLabel = downloadBtn.textContent;
     downloadBtn.textContent = "Building…";

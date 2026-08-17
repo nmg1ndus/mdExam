@@ -183,7 +183,12 @@
     return new docx.Document({
       sections: [
         {
-          properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
+          properties: {
+            page: {
+              size: { width: 11906, height: 16838 }, // A4 (twips): 210mm x 297mm
+              margin: { top: 720, bottom: 720, left: 720, right: 720 }, // 0.5in all sides, per Google Docs
+            },
+          },
           children,
         },
       ],
