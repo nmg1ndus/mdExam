@@ -35,44 +35,28 @@ Q14. In a triangle ABC, if 2∠A = 3∠B = 6∠C, find ∠A, ∠B and ∠C.  [3 
       .replace(/>/g, "&gt;");
   }
 
-  // Same auto-style token logic as docxBuilder.js, applied to escaped text
-  const BOLD_TOKEN_RE = /\((?:[a-zA-Z]{1,5}|\d{1,3})\)/g;
-  const MARKS_TOKEN_RE = /\[[^\[\]]*\bMarks?\b[^\[\]]*\]/gi;
-
-  function findTokens(text) {
-    const tokens = [];
-    let m;
-    BOLD_TOKEN_RE.lastIndex = 0;
-    while ((m = BOLD_TOKEN_RE.exec(text)) !== null) {
-      tokens.push({ start: m.index, end: m.index + m[0].length, text: m[0], type: "option" });
-    }
-    MARKS_TOKEN_RE.lastIndex = 0;
-    while ((m = MARKS_TOKEN_RE.exec(text)) !== null) {
-      tokens.push({ start: m.index, end: m.index + m[0].length, text: m[0], type: "marks" });
-    }
-    tokens.sort((a, b) => a.start - b.start);
-    const filtered = [];
-    let lastEnd = -1;
-    for (const t of tokens) {
-      if (t.start >= lastEnd) {
-        filtered.push(t);
-        lastEnd = t.end;
-      }
-    }
-    return filtered;
-  }
+  // Same auto-style token logic as docxBuilder.js, applied to escaped text.
+  // Order matters: **bold** must be tried before *italic* (see docxBuilder.js).
+  const INLINE_TOKEN_RE =
+    /(\*\*(.+?)\*\*)|(\[[^\[\]]*\bMarks?\b[^\[\]]*\])|(\((?:[a-zA-Z]{1,5}|\d{1,3})\))|(\*(.+?)\*)/g;
 
   function inlineFormatHtml(text) {
     let out = "";
     let last = 0;
-    for (const t of findTokens(text)) {
-      out += esc(text.slice(last, t.start));
-      if (t.type === "marks") {
-        out += '<span class="pv-marks">' + esc(t.text) + "</span>";
-      } else {
-        out += "<b>" + esc(t.text) + "</b>";
+    let m;
+    INLINE_TOKEN_RE.lastIndex = 0;
+    while ((m = INLINE_TOKEN_RE.exec(text)) !== null) {
+      out += esc(text.slice(last, m.index));
+      if (m[1] !== undefined) {
+        out += "<b>" + esc(m[2]) + "</b>";
+      } else if (m[3] !== undefined) {
+        out += '<span class="pv-marks">' + esc(m[3]) + "</span>";
+      } else if (m[4] !== undefined) {
+        out += "<b>" + esc(m[4]) + "</b>";
+      } else if (m[5] !== undefined) {
+        out += "<i>" + esc(m[6]) + "</i>";
       }
-      last = t.end;
+      last = m.index + m[0].length;
     }
     out += esc(text.slice(last));
     return out;
