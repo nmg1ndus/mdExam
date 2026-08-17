@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MarkDexam — Markdown to Exam Paper (.docx)</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="mark">Mark<span>Dexam</span></div>
+        <div class="tagline">write the paper in markdown — download it as a styled Word exam</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="sampleBtn">Load sample paper</button>
+        <button class="btn btn-primary" id="downloadBtn">Download .docx</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="chip"><b># </b>Title</span>
+      <span class="chip"><b>## </b>Subtitle</span>
+      <span class="chip"><b>### </b>Class / Marks line</span>
+      <span class="chip"><b>---</b>Divider</span>
+      <span class="chip"><b>&gt; </b>Section banner</span>
+      <span class="chip">indent line with 2 spaces → sub-option</span>
+      <span class="chip">(a) (i) (IV) (3) → <b>auto-bold</b></span>
+      <span class="chip">[2 Marks] [3 Marks] → <b>auto-bold + navy-soft</b></span>
+    </div>
+
+    <div class="main">
+      <div class="pane">
+        <div class="pane-head">Markdown</div>
+        <textarea id="editor" spellcheck="false" placeholder="# Your School Name
+## Half Yearly Examination (2026-27)
+### Class: VII                    Time: 3 Hrs
+### Subject: Mathematics          Maximum Marks: 80
+---
+> Q1. Mark the correct answer.  (1 x 10 = 10 Marks)
+(i) What is the 56th even number?
+  (a) 63  (b) 70  (c) 84  (d) 112"></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-head">Live preview</div>
+        <div class="preview-scroll">
+          <div class="page" id="preview"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="note">
+      Diagrams and LaTeX are not auto-generated here — write plain text under a banner and it stays plain text, exactly as typed.
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+  <script src="docxBuilder.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
