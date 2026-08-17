@@ -11,6 +11,7 @@
      (anything else)-> normal body paragraph, plain text
                        - "(a)" "(b)" "(i)" "(iv)" "(I)" "(3)" etc. auto-bold
                        - "[2 Marks]" "[1 x 4 = 4 Marks]" etc. auto-bold + colored #4a607a
+                       - **text** -> bold, *text* -> italic (standard markdown)
                        - lines indented with 2+ spaces / a tab get a deeper
                          left indent (sub-option style)
      (blank line)   -> small vertical spacer
@@ -22,50 +23,35 @@
   const RULE_GREY = "A0A0A0";
   const CONTENT_WIDTH = 10466; // A4 minus 0.5in margins on both sides
 
-  // matches (a) (B) (iv) (III) (12) style short parenthetical markers
-  const BOLD_TOKEN_RE = /\((?:[a-zA-Z]{1,5}|\d{1,3})\)/g;
-  // matches [2 Marks] [1 x 4 = 4 Marks] [3 marks] style bracketed mark tags
-  const MARKS_TOKEN_RE = /\[[^\[\]]*\bMarks?\b[^\[\]]*\]/gi;
-
-  // Finds all auto-style tokens in text, sorted, non-overlapping (first match wins).
-  function findTokens(text) {
-    const tokens = [];
-    let m;
-    BOLD_TOKEN_RE.lastIndex = 0;
-    while ((m = BOLD_TOKEN_RE.exec(text)) !== null) {
-      tokens.push({ start: m.index, end: m.index + m[0].length, text: m[0], type: "option" });
-    }
-    MARKS_TOKEN_RE.lastIndex = 0;
-    while ((m = MARKS_TOKEN_RE.exec(text)) !== null) {
-      tokens.push({ start: m.index, end: m.index + m[0].length, text: m[0], type: "marks" });
-    }
-    tokens.sort((a, b) => a.start - b.start);
-    const filtered = [];
-    let lastEnd = -1;
-    for (const t of tokens) {
-      if (t.start >= lastEnd) {
-        filtered.push(t);
-        lastEnd = t.end;
-      }
-    }
-    return filtered;
-  }
+  // Single ordered pass: **bold** must be tried before *italic* so a
+  // double-star run isn't mis-read as an italic run with a stray star.
+  //   group 1/2 -> **bold**        (2 = inner text)
+  //   group 3    -> [.. Marks ..]  (kept as-is, incl. brackets)
+  //   group 4    -> (a) (iv) (3)   (kept as-is, incl. parens)
+  //   group 5/6 -> *italic*        (6 = inner text)
+  const INLINE_TOKEN_RE =
+    /(\*\*(.+?)\*\*)|(\[[^\[\]]*\bMarks?\b[^\[\]]*\])|(\((?:[a-zA-Z]{1,5}|\d{1,3})\))|(\*(.+?)\*)/g;
 
   function parseInlineRuns(text, extra) {
     extra = extra || {};
     const runs = [];
     let lastIndex = 0;
-    const tokens = findTokens(text);
-    for (const t of tokens) {
-      if (t.start > lastIndex) {
-        runs.push(new docx.TextRun(Object.assign({ text: text.slice(lastIndex, t.start) }, extra)));
+    let m;
+    INLINE_TOKEN_RE.lastIndex = 0;
+    while ((m = INLINE_TOKEN_RE.exec(text)) !== null) {
+      if (m.index > lastIndex) {
+        runs.push(new docx.TextRun(Object.assign({ text: text.slice(lastIndex, m.index) }, extra)));
       }
-      if (t.type === "marks") {
-        runs.push(new docx.TextRun(Object.assign({ text: t.text, bold: true, color: NAVY_SOFT }, extra)));
-      } else {
-        runs.push(new docx.TextRun(Object.assign({ text: t.text, bold: true }, extra)));
+      if (m[1] !== undefined) {
+        runs.push(new docx.TextRun(Object.assign({ text: m[2], bold: true }, extra)));
+      } else if (m[3] !== undefined) {
+        runs.push(new docx.TextRun(Object.assign({ text: m[3], bold: true, color: NAVY_SOFT }, extra)));
+      } else if (m[4] !== undefined) {
+        runs.push(new docx.TextRun(Object.assign({ text: m[4], bold: true }, extra)));
+      } else if (m[5] !== undefined) {
+        runs.push(new docx.TextRun(Object.assign({ text: m[6], italics: true }, extra)));
       }
-      lastIndex = t.end;
+      lastIndex = m.index + m[0].length;
     }
     if (lastIndex < text.length) {
       runs.push(new docx.TextRun(Object.assign({ text: text.slice(lastIndex) }, extra)));
@@ -195,5 +181,5 @@
     });
   }
 
-  global.MarkDexam = { markdownToDoc, parseInlineRuns, BOLD_TOKEN_RE };
+  global.MarkDexam = { markdownToDoc, parseInlineRuns, INLINE_TOKEN_RE };
 })(window);
